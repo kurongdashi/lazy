@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <style>
+    .lazy {
+      width: 300px;
+      height: 200px;
+      /* display: none; */
+    }
+  </style>
+  <body>
+    <img class="lazy" data-src="./image1.jpg" src="./def.jpg" alt="图片1" />
+    <img class="lazy" data-src="./image2.jpg" src="./def.jpg" alt="图片2" />
+    <img class="lazy" data-src="./image3.jpg" src="./def.jpg" alt="图片3" />
+    <img class="lazy" data-src="./image1.jpg" src="./def.jpg" alt="图片4" />
+    <img class="lazy" data-src="./image2.jpg" src="./def.jpg" alt="图片5" />
+    <img class="lazy" data-src="./image3.jpg" src="./def.jpg" alt="图片6" />
+    <button>合理</button>
+  </body>
+  <script>
+    window.onload = function () {
+      // querySelector 只获取静态快照，如果动态添加的node不会动态获取，selector规范，类似变量
+      const elements = document.querySelectorAll(".lazy");
+      //   动态的，每次添加新元素都会查询到，旧浏览器兼容，属于dom规范，类似对象地址引用
+      //   const elements2 = document.getElementsByClassName("lazy");
+      //   console.log("elements", elements);
+      const images = [].slice.call(elements);
+      // 判断window下面是否有intersectionObserver （交叉观察器）对象,此对象用于观察dom元素是否在可视窗口内
+      if ("IntersectionObserver" in window) {
+        //   if (false) {
+        const imageObserver = new IntersectionObserver(function (
+          entries,
+          observer
+        ) {
+          //   entries 是个数组类型
+          entries.forEach((item) => {
+            if (item.isIntersecting) {
+              // 元素进入视口,后修改元素src属性
+              const img = item.target;
+              console.log(img.alt);
+              // 如果是默认图片才去请求，已经加载过的不需要处理
+              if (img.src.endsWith("def.jpg")) {
+                setTimeout(() => {
+                  // 模拟网络请求通过data-id去请求图片地址，然后将地址与id绑定并缓存到本地，防止二次请求
+                  img.src = img.dataset.src;
+                }, 1000);
+              }
+            }
+          });
+        });
+        images.forEach((img) => {
+          // 依次观察每个元素
+          imageObserver.observe(img);
+        });
+      } else {
+        // 旧浏览器
+        function checkViewPort() {
+          images.forEach((img) => {
+            const rect = img.getBoundingClientRect();
+            if (rect.top < window.innerHeight) {
+              // 如果元素top在视口内，说明元素可见
+              setTimeout(() => {
+                img.src = img.dataset.src;
+              }, 1000);
+            }
+          });
+        }
+        checkViewPort();
+        document.addEventListener("scroll", checkViewPort);
+        window.addEventListener("resize", checkViewPort);
+      }
+    };
+  </script>
+</html>
