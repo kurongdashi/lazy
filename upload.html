@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    批量选择上传：<input type="file" id="file" multiple />
+  </body>
+  <script>
+    window.onload = function () {
+      const file = document.getElementById("file");
+      file.addEventListener("change", function (e) {
+        const files = e.target.files;
+        // 通过 input file multiple属性可让用户批量选中图片
+        const formData = new FormData();
+        // 非数组转数组
+        const files1 = [].slice.call(files);
+        const files2 = Array.from(files);
+        console.log(Array.isArray(files));
+        console.log(Array.isArray(files1));
+        console.log(Array.isArray(files2));
+        // 遍历处理文件
+        files1.forEach((img, key) => {
+          formData.set(`imgage[${key}]`, img);
+        });
+        //
+        let url = "/upload";
+        fetch(url, {
+          method: "post",
+          body: formData,
+        });
+      });
+    };
+  </script>
+</html>

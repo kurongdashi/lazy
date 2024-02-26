@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <style>
+    #list {
+      height: 100vh;
+      overflow-y: auto;
+      background-color: #ccc;
+    }
+    #list .item {
+      height: 150px;
+      padding: 15px;
+      background-color: #971829;
+      margin-bottom: 5px;
+    }
+    #loadmore,
+    #refresh {
+      display: none;
+      height: 100px;
+      line-height: 100px;
+      text-align: center;
+      background-color: #ccc;
+    }
+  </style>
+  <body>
+    <div id="container">
+      <div id="refresh">刷新中...</div>
+      <div id="list"></div>
+      <div id="loadmore">加载更多...</div>
+    </div>
+  </body>
+  <script>
+    window.onload = function () {
+      const container = document.getElementById("container");
+      const listDom = document.getElementById("list");
+      const loadDom = document.getElementById("loadmore");
+      const refreshDom = document.getElementById("refresh");
+      let startY = 0,
+        isRefresh = false,
+        isLoadMore = false,
+        initCount = 10,
+        refreshCount = 0,
+        loadCount = 0,
+        scrollTop = listDom.scrollTop;
+
+      init(initCount);
+      function init(endIndex, startIndex = 0) {
+        while (startIndex < endIndex) {
+          startIndex++;
+          const div = document.createElement("div");
+          div.textContent = "这里是一个item" + startIndex;
+          if (isRefresh) {
+            div.textContent = "这里是一个new item" + startIndex;
+          }
+          div.classList.add("item");
+          listDom.appendChild(div);
+        }
+      }
+      function refresh() {
+        isRefresh = true;
+        refreshDom.style = "display:block";
+        setTimeout(() => {
+          refreshDom.style = "display:none";
+          refreshCount++;
+          listDom.innerHTML = "";
+          const endIndex = initCount + 10 * refreshCount;
+          init(endIndex, endIndex - 10);
+          isRefresh = false;
+        }, 1000);
+      }
+      function loadMore() {
+        isLoadMore = true;
+        loadDom.style = "display:block";
+        setTimeout(() => {
+          loadDom.style = "display:none";
+          loadCount++;
+          const endIndex = initCount + 5 * loadCount;
+          init(endIndex, endIndex - 5);
+          isLoadMore = false;
+        }, 1000);
+      }
+
+      listDom.addEventListener("scroll", function (e) {
+        console.log("scrollTop=", listDom.scrollTop);
+        scrollTop = listDom.scrollTop;
+      });
+      container.addEventListener("touchstart", function (e) {
+        startY = e.touches[0].clientY;
+      });
+      container.addEventListener("touchmove", function (e) {
+        const clientY = e.touches[0].clientY;
+        const dy = clientY - startY;
+        if (dy > 20 && !isRefresh && scrollTop == 0) {
+          refresh();
+        }
+        const isBottom =
+          listDom.clientHeight + scrollTop == listDom.scrollHeight;
+        if (dy < -20 && !isLoadMore && isBottom) {
+          loadMore();
+        }
+      });
+    };
+  </script>
+</html>
