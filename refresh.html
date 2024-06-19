@@ -94,13 +94,10 @@
       container.addEventListener("touchmove", function (e) {
         const clientY = e.touches[0].clientY;
         const dy = clientY - startY;
-        // scrollTop==0 列表滚动到顶部了
         if (dy > 20 && !isRefresh && scrollTop == 0) {
           refresh();
         }
-        // 列表滚动到底部了
         const isBottom =
-          // clientHeigth是list的可视窗口高度，scrollTop是被卷去的高度，scrollHeigth是list完整高度
           listDom.clientHeight + scrollTop == listDom.scrollHeight;
         if (dy < -20 && !isLoadMore && isBottom) {
           loadMore();

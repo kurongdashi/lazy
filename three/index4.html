@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D地球与多种贴图</title>
+  </head>
+  <script></script>
+  <style>
+    html,
+    body,
+    #canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <body>
+    <div id="canvas"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./lib/three.module.js",
+          "OrbitControls": "./lib/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "OrbitControls";
+      window.onload = function () {
+        init();
+      };
+      function init() {
+        // 场景
+        const scene = new THREE.Scene();
+        // scene.background = { color: 0xeeeeee };
+        // scene.background = new THREE.Color(0xeeeeee);
+        const axes = new THREE.AxesHelper(10);
+        scene.add(axes);
+        // 透视相机,相机视角角度，宽高比决定相机框大小，近截面距离，远截面距离决定相机框放大后大小
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1, // 默认0.1
+          1000
+        );
+        camera.position.set(-10, 0, 10);
+        // 相机能看到的位置;
+        camera.lookAt(scene.position);
+
+        // -----------------
+        const loader = new THREE.TextureLoader();
+        // 普通纹理
+        const surface = loader.load("./img/earth/earth_surface.jpg");
+        // 法线纹理
+        const normal = loader.load("./img/earth/earth_normal.jpg");
+        // 高光纹理
+        const specular = loader.load("./img/earth/earth_specular.jpg");
+        const geometry = new THREE.SphereGeometry(5);
+        const material = new THREE.MeshPhongMaterial({
+          map: surface,
+          normalMap: normal,
+          specularMap: specular,
+        });
+        const earth = new THREE.Mesh(geometry, material);
+        // scene.add(earth);
+        // 云层
+        const cloudsTexture = loader.load("./img/earth/earth_clouds.jpg");
+        const geometryCloud = new THREE.SphereGeometry(5.1);
+        const materialCloud = new THREE.MeshLambertMaterial({
+          color: 0xffffff,
+          map: cloudsTexture,
+          //   云层半透明
+          transparent: true,
+          //   opacity: 0.9,
+        });
+        const clouds = new THREE.Mesh(geometryCloud, materialCloud);
+        const group = new THREE.Group();
+        group.add(earth);
+        group.add(clouds);
+        group.rotation.y = Math.PI * 0.1;
+        scene.add(group);
+        // ----------------
+        // 灯光
+        const ambient = new THREE.AmbientLight(0xffffff);
+        // scene.add(ambient);
+        const light = new THREE.DirectionalLight(0xffffff);
+        light.position.set(10, 10, 10);
+        scene.add(light);
+        // 渲染器
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.render(scene, camera);
+        document.getElementById("canvas").appendChild(renderer.domElement);
+        // 轨道控制器
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.addEventListener("change", () => {
+          renderer.render(scene, camera);
+        });
+        function animate() {
+          earth.rotateY(0.002);
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate);
+        }
+        function animate2() {
+          clouds.rotateY(0.001);
+          renderer.render(scene, camera);
+          requestAnimationFrame(animate2);
+        }
+        animate();
+        animate2();
+      }
+    </script>
+  </body>
+</html>

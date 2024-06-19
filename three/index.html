@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>灯光与阴影</title>
+  </head>
+  <script></script>
+
+  <style>
+    html,
+    body,
+    #canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <body>
+    <div id="canvas"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./lib/three.module.js",
+          "OrbitControls": "./lib/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "OrbitControls";
+      // 场景产生投影需要哪些？
+      // 1. 光源：(不能使用环境光) 产生阴影 castShadow
+      // 2. 几何体：产生阴影castShadow
+      // 3. 地面材料：接收阴影（receiveShadow）
+      // 4. 使用反光材料 MeshPhongMaterial 或漫反射材料 MeshLambertMaterial（没有高亮属性），+ 设置高亮shininess (基础材料不受光照影响)
+      // 5. 渲染器支持渲染阴影：shadowMap.enabled
+      console.log("THREE", THREE);
+      window.onload = function () {
+        init();
+      };
+      function init() {
+        // 场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xeeeeee);
+        // 坐标系辅助
+        const helper = new THREE.AxesHelper(30);
+        const gridHelper = new THREE.GridHelper();
+        scene.add(gridHelper);
+        scene.add(helper);
+        // 环境光=所有地方都有光，不会产生阴影
+        // const ambient = new THREE.AmbientLight(0xffffff, 1);
+        // scene.add(ambient);
+        // 光源-点光源发散光，模拟灯泡
+        const light = new THREE.PointLight(0xffffff, 1000, 100);
+        // const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(10, 30, 30);
+        // light.angle = Math.PI / 10;
+        // light.shadow.mapSize.set(1024, 1024);
+        // 1.光源产生投影
+        light.castShadow = true;
+        scene.add(light);
+        // 透视相机,相机视角角度，宽高比决定相机框大小，近截面距离，远截面距离决定相机框放大后大小
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1, // 默认0.1
+          2000
+        );
+        camera.position.set(-30, 40, 20);
+        // camera.position.x = -30;
+        // camera.position.y = 40;
+        // camera.position.z = 30;
+        // 相机能看到的位置
+        camera.lookAt(scene.position);
+        // 平面几何
+        const planeGeometry = new THREE.PlaneGeometry(60, 60);
+
+        // 高反射网格材料
+        const standardMaterial = new THREE.MeshPhongMaterial({
+          color: 0xeeeeee,
+          shininess: 100,
+        });
+        // 合成平面实体
+        const plane = new THREE.Mesh(planeGeometry, standardMaterial);
+        // 2.让平面可以获得投影
+        plane.receiveShadow = true;
+        // 幅度角度，2π=360
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.position.x = 15;
+        scene.add(plane);
+
+        // 立方体几何
+        const cubeGeometry = new THREE.BoxGeometry(4, 4, 4);
+        // lambert 亮度材料-红色
+        const lamberMaterial = new THREE.MeshPhongMaterial({
+          color: 0xff0000,
+          shininess: 100,
+        });
+        const cube = new THREE.Mesh(cubeGeometry, lamberMaterial);
+        // 图形的中心点在坐标系的原点
+        // x轴向里
+        cube.position.x = 4;
+        // y轴向上
+        cube.position.y = 8;
+        cube.position.z = 2;
+        // 3.图形可以产生投影
+        cube.castShadow = true;
+        // z轴向外
+        scene.add(cube);
+
+        const sphereGeometry = new THREE.SphereGeometry(2, 20, 20);
+        // 高反光材料
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+          color: "blue",
+          // 材料高反光
+          shininess: 100,
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        sphere.position.x = 24;
+        sphere.position.y = 4;
+        sphere.position.z = 2;
+        // 3.材料产生投影
+        sphere.castShadow = true;
+        scene.add(sphere);
+
+        // 画布中必须渲染场景和相机
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        // 4.渲染器支持投影shadowMap.enabled 开启支持投影
+        renderer.shadowMap.enabled = true;
+
+        // 最后处理，渲染器渲染，场景+相机得到
+        renderer.render(scene, camera);
+        document.getElementById("canvas").appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        // 设置场景中动画函数
+        renderer.setAnimationLoop(animate);
+
+        function animate() {
+          // 修改某个物体的属性，然后重新绘制，达到动画效果
+          cube.rotation.x += 0.01;
+          sphere.rotation.x += 0.01;
+          light.rotation.y += 0.1;
+
+          renderer.render(scene, camera);
+        }
+        controls.addEventListener("change", () => {
+          renderer.render(scene, camera);
+        });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>物体的相关位置，移动，缩放等操作</title>
+  </head>
+  <script></script>
+  <style>
+    html,
+    body,
+    #canvas {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+  <body>
+    <div id="canvas"></div>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./lib/three.module.js",
+          "OrbitControls": "./lib/OrbitControls.js"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from "three";
+      import { OrbitControls } from "OrbitControls";
+      console.log("THREE", THREE);
+      window.onload = function () {
+        init();
+      };
+      function init() {
+        // 场景
+        const scene = new THREE.Scene();
+        // scene.background = { color: 0xeeeeee };
+        scene.background = new THREE.Color(0xeeeeee);
+        const axes = new THREE.AxesHelper(10);
+        scene.add(axes);
+
+        const plane = createPlane();
+        scene.add(plane);
+        // 透视相机,相机视角角度，宽高比决定相机框大小，近截面距离，远截面距离决定相机框放大后大小
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          window.innerWidth / window.innerHeight,
+          0.1, // 默认0.1
+          1000
+        );
+        camera.position.set(10, 10, 10);
+        // 相机能看到的位置;
+        camera.lookAt(plane.position);
+        // 相机能看到的位置;
+        camera.lookAt(scene.position);
+
+        const light = new THREE.PointLight(0xffffff, 100, 100);
+        light.position.set(3, 3, 3);
+        scene.add(light);
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.render(scene, camera);
+        renderer.setClearColor(0xeeeeee);
+        document.getElementById("canvas").appendChild(renderer.domElement);
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.addEventListener("change", () => {
+          renderer.render(scene, camera);
+        });
+        function animate() {}
+      }
+      function createPlane() {
+        const texture = new THREE.TextureLoader().load("./img/world.jpg");
+        const geometry = new THREE.PlaneGeometry(1, 1);
+        // uv坐标对应贴图的position：左上，右上，左下，右下
+        const uv = new Float32Array([0, 0.5, 0.5, 0.5, 0, 0, 0.5, 0]);
+
+        geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+        const material = new THREE.MeshLambertMaterial({
+          color: 0xffffff,
+          map: texture,
+        });
+        const plane = new THREE.Mesh(geometry, material);
+        plane.rotation.x = -0.5 * Math.PI;
+        plane.scale.set(2, 2, 2);
+        plane.translateZ(1);
+        return plane;
+      }
+    </script>
+  </body>
+</html>
